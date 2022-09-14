@@ -1,29 +1,27 @@
-FROM cmccornack/signacplus:v2.1
+FROM cmccornack/signacplus:v2.3
 
-RUN apt-get install -y libgeos-dev
 
-RUN pip install -U pip    
-RUN pip install -U macs2
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \ 
+  cmake \ 
+  libudunits2-dev \
+  libgdal-dev \
+  libgeos-dev \
+  libproj-dev \
+  libharfbuzz-dev \
+  libfribidi-dev \ 
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
-# Seurat and SeuratWrappers
-Run R -e "BiocManager::install('Seurat')" 
-Run R -e "remotes::install_github('satijalab/seurat-wrappers')"
+RUN R -e "remotes::install_github('r-lib/ragg')"
+RUN R -e "remotes::install_cran('nloptr')"
 
-#scWGCNA
-Run R -e "BiocManager::install('preprocessCore', version = '3.14')" 
-Run R -e "BiocManager::install('impute', version = '3.14')" 
-RUN R -e "remotes::install_github('cferegrino/scWGCNA', ref='main')" 
-
-# JASPAR2020 & rcartocolor
-Run R -e "remotes::install_github('da-bar/JASPAR2020')"
-RUN R -e "remotes::install_github('Nowosad/rcartocolor')"
-
-# Note: I would like to install monocle3 but am having trouble with the Cairo install
-
-# scImpute, singleCellHaystack, scCATCH
-RUN R -e "remotes::install_github(c('Vivianstats/scImpute', 'alexisvdb/singleCellHaystack', 'ZJUFanLab/scCATCH'))" \
-# velocyto.R
-    && R -e "remotes::install_github(c('aertslab/SCopeLoomR', 'velocyto-team/velocyto.R'))" \
-    && R -e "install.packages('pagoda2')"
-
-RUN R -e "BiocManager::install(c('batchelor', 'Matrix.utils'))" 
+# Monocle3
+RUN R -e "BiocManager::install(c('BiocGenerics', 'limma', 'S4Vectors', 'SingleCellExperiment', 'SummarizedExperiment', 'batchelor', 'Matrix.utils'))" \
+    && R -e "remotes::install_github('r-spatial/sf', configure.args = '--with-proj-lib=/usr/local/lib/')" \
+    && R -e "remotes::install_github('cole-trapnell-lab/leidenbase')" \
+    && R -e "remotes::install_github('cole-trapnell-lab/monocle3', ref='develop')" \
+    && R -e "BiocManager::install(c('org.Mm.eg.db', 'org.Hs.eg.db', 'org.Dm.eg.db', 'org.Ce.eg.db'))" \
+    && R -e "remotes::install_github('cole-trapnell-lab/garnett', ref='monocle3')" \
+# cicero
+    && R -e "remotes::install_github('cole-trapnell-lab/cicero-release', ref = 'monocle3')"
